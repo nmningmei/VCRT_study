@@ -281,7 +281,7 @@ for ii,idx in enumerate(pval_idx):
     else:
         ax.axvspan(times[idx]-25,times[idx]+25,color='red',alpha=.2)
 ax.legend(fontsize='small')   
-fig.savefig(working_dir+'old vs new vs scr temporal decoding.png',dpi=500) 
+fig.savefig(working_dir+'old vs new vs scr temporal decoding.png',dpi=500,bbox_inches = 'tight') 
 
 
 
