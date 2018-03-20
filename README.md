@@ -17,4 +17,13 @@
 ## classifiers were trained ant tested along the last dimension (5 * 28 classifiers were trained and tested)
 
 ## Temporal decoding: trained and tested at the same segment 
+### old vs new
+![old vs new](https://github.com/adowaconan/VCRT_study/blob/master/results/old%20vs%20new%20temporal%20decoding.png)
+### old vs new vs scramble
+![old vs new vs scramble](https://github.com/adowaconan/VCRT_study/blob/master/results/old%20vs%20new%20vs%20scr%20temporal%20decoding.png)
+
 ## Temporal generalization: trained at a given segment and tested at all segments
+### old vs new
+![old vs new](https://github.com/adowaconan/VCRT_study/blob/master/results/Old%20vs%20New%20decoding%20generalization.png)
+### old vs new vs scramble
+![old vs new vs scramble](https://github.com/adowaconan/VCRT_study/blob/master/results/Old%20vs%20New%20vs%20scr%20decoding%20generalization.png)
