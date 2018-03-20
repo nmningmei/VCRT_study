@@ -268,7 +268,11 @@ no_shuffle = results[0]
 shuffle = results[1:] 
 import mne
 epochs = mne.read_epochs('D://Epochs//old vs new-epo.fif',preload=False)
-
+font = {
+        'weight' : 'bold',
+        'size'   : 20}
+import matplotlib
+matplotlib.rc('font', **font)
 fig,ax = plt.subplots(figsize=(16,8))
 times = np.linspace(25,1375,28)
 ax.plot(times,no_shuffle['scores_mean'],color='k',alpha=1.,label='Classifi.Score (AUC Mean)_no shuffle')
@@ -296,7 +300,7 @@ for ii,idx in enumerate(pval_idx):
     else:
         ax.axvspan(times[idx]-25,times[idx]+25,color='red',alpha=.2)
 ax.legend(fontsize='small')     
-fig.savefig(working_dir+'old vs new temporal decoding.png',dpi=500,bbox_inches = 'tight')  
+fig.savefig('D:\\NING - spindle\\VCRT_study\\results\\'+'old vs new temporal decoding.png',dpi=500,bbox_inches = 'tight')  
 
 
     
