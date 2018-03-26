@@ -19,6 +19,8 @@
 ## Temporal decoding: trained and tested at the same segment 
 ### old vs new
 ![old vs new](https://github.com/adowaconan/VCRT_study/blob/master/results/old%20vs%20new%20temporal%20decoding.png)
+### old vs new topograph maps:
+![old vs new topomap](https://github.com/adowaconan/VCRT_study/blob/master/results/old%20vs%20new%20topomap.png)
 ### old vs new vs scramble
 ![old vs new vs scramble](https://github.com/adowaconan/VCRT_study/blob/master/results/old%20vs%20new%20vs%20scr%20temporal%20decoding.png)
 
