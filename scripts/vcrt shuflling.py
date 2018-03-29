@@ -271,6 +271,7 @@ if __name__ == '__main__':
         
         
 ############### plot ######################################################################
+########## you don't need to run anything above to plot if you have done that #############
 from matplotlib import pyplot as plt
 import pickle
 import numpy as np
@@ -317,8 +318,17 @@ ax.legend(fontsize='small')
 fig.savefig('D:\\NING - spindle\\VCRT_study\\results\\'+'old vs new temporal decoding.png',dpi=500,bbox_inches = 'tight')  
 
 
+pvals = np.vstack([item['pval'] for item in results[1:]])    
+pvals = np.vstack((no_shuffle['pval'],pvals),)
+pval_set = np.sum(pvals < 0.05, axis=0)
+pval_idx = np.where(pval_set> (11/2))[0]    
     
+<<<<<<< HEAD
  sample_result = results[1]
+=======
+
+sample_result = results[1]
+>>>>>>> origin/master
 
 times = np.vstack([np.arange(0,1450,50)[:-1],np.arange(0,1450,50)[1:]]).T
 fig, axes = plt.subplots(figsize=(14,9),nrows=4,ncols=7)
@@ -344,8 +354,12 @@ cbar = fig.colorbar(im, cax=cb_ax)
 cbar.set_ticks([-k, 0, k])
 cbar.set_ticklabels(['old image', 'no difference', 'new image'])
 cbar.ax.set_title('         $\Delta$ $\mu$V = New - Old')
+<<<<<<< HEAD
 fig.savefig('D:\\NING - spindle\\VCRT_study\\results\\'+'old vs new topomap.png',dpi=500,bbox_inches='tight')   
     
+=======
+fig.savefig('D:\\NING - spindle\\VCRT_study\\results\\'+'old vs new topomap.png',dpi=500,bbox_inches='tight')
+>>>>>>> origin/master
  
     
     
