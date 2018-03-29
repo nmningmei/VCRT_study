@@ -23,7 +23,7 @@ This script is to demonstrate the process of decoding old (coded 0) and new (cod
 """
 if __name__ == '__main__':
     import os
-    os.chdir('D://Epochs')
+#    os.chdir('D://Epochs')
     import avr_reader 
     import mne
     import numpy as np
@@ -83,7 +83,8 @@ if __name__ == '__main__':
 #    old = epochs['old'].average()
 #    new = epochs['new'].average()
     # load the epoch data converted from BESA to MNE-python epoch object
-    epochs  = mne.read_epochs('D://Epochs//old vs new-epo.fif',preload=True)
+    os.chdir('C:\\Users\\ning\\OneDrive\\python works\\VCRT_study\\data')
+    epochs  = mne.read_epochs('old vs new-epo.fif',preload=True)
     # define the classification pipeline that is used later
     def make_clf(vec=False):
         clf = []
@@ -101,7 +102,7 @@ if __name__ == '__main__':
         clf = Pipeline(clf)
         return clf 
     results_ = []# for saving all the results
-    saving_dir = 'D:\\Epochs\\vcrt results\\'
+    saving_dir = 'C:\\Users\\ning\\OneDrive\\python works\\VCRT_study\\results\\'
     if not os.path.exists(saving_dir):
         os.mkdir(saving_dir)
     ################# first iteration: not shuffling the order of the subjects #################################
@@ -114,6 +115,8 @@ if __name__ == '__main__':
     clfs = []
     scores = []
     patterns = []
+    fig, axes = plt.subplots(figsize=(25,16),nrows=4,ncols=7)
+    times = np.vstack([np.arange(0,1450,50)[:-1],np.arange(0,1450,50)[1:]]).T 
     for train,test in tqdm(cv.split(data,labels),desc='train-test'):# split the data into training set and testing set
         X = data[train]
         y = labels[train]
@@ -127,6 +130,17 @@ if __name__ == '__main__':
         # compute the performance of each trained classifier at each of the 50 ms window with the testing data
         scores_ = [metrics.roc_auc_score(y_,clf.predict_proba(X_[:,:,ii])[:,-1]) for ii,clf in zip(idx,clfs[-1])]
         scores.append(scores_)
+        # plot roc curves of the decoding and save them
+        rocs = np.array([metrics.roc_curve(y_,clf.predict_proba(X_[:,:,ii])[:,-1]) for ii,clf in zip(idx,clfs[-1])])
+        
+        for ii,(roc_,ax,(start,stop)) in enumerate(zip(rocs,axes.flatten(),times)):
+            fpr,tpr,th = roc_
+            ax.plot(fpr,tpr,color='blue',)
+            ax.set(xlim=(0,1),ylim=(0,1),)
+            ax.plot([0, 1], [0, 1], linestyle='--',color='red')
+            ax.set(title='%d-%d ms'%(start,stop))
+            
+            
     scores = np.array(scores)
     patterns=np.array(patterns)
     ####################### Temporal gnenralization   ############################################
@@ -304,7 +318,33 @@ fig.savefig('D:\\NING - spindle\\VCRT_study\\results\\'+'old vs new temporal dec
 
 
     
+ sample_result = results[1]
+
+times = np.vstack([np.arange(0,1450,50)[:-1],np.arange(0,1450,50)[1:]]).T
+fig, axes = plt.subplots(figsize=(14,9),nrows=4,ncols=7)
+k =5e-7
+for idx,((start,stop),score,pvalue,ax,activity) in enumerate(zip(times,sample_result['scores_mean'],
+                                                                sample_result['pval'],
+                                                                axes.flatten(),
+                                                                sample_result['activity'])):
     
+    
+    im,cn = mne.viz.plot_topomap(activity,epochs.info,axes=ax,show=False,vmin=-k,vmax=k)  
+    if idx in pval_idx:
+        im.axes.set(title = '%d-%d ms'%(start,stop),xlabel='%.2f*'%score)
+    else:
+        im.axes.set(title = '%d-%d ms'%(start,stop),xlabel='%.2f'%score)
+fig.subplots_adjust(bottom=0.1, top=0.96, left=0.1, right=0.8,
+            wspace=0.02, hspace=0.02)
+# add an axes, lower left corner in [0.83, 0.1] measured in figure coordinate with 
+# axes width 0.02 and height 0.8
+cb_ax = fig.add_axes([0.83, 0.1, 0.02, 0.8])
+cbar = fig.colorbar(im, cax=cb_ax)
+# set the colorbar ticks and tick labels
+cbar.set_ticks([-k, 0, k])
+cbar.set_ticklabels(['old image', 'no difference', 'new image'])
+cbar.ax.set_title('         $\Delta$ $\mu$V = New - Old')
+fig.savefig('D:\\NING - spindle\\VCRT_study\\results\\'+'old vs new topomap.png',dpi=500,bbox_inches='tight')   
     
  
     
