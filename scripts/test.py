@@ -7,7 +7,7 @@ Created on Thu Mar 29 16:26:42 2018
 
 if __name__ == '__main__':
     import os
-#    os.chdir('D://Epochs')
+    os.chdir('D://Epochs')
     import avr_reader 
     import mne
     import numpy as np
@@ -26,7 +26,7 @@ if __name__ == '__main__':
     from tqdm import tqdm
     from mne.decoding import Vectorizer
     from scipy import stats
-    os.chdir('C:\\Users\\ning\\OneDrive\\python works\\VCRT_study\\data')
+    os.chdir('D:\\NING - spindle\\VCRT_study\\data')
     epochs  = mne.read_epochs('old vs new-epo.fif',preload=True)
     def make_clf(vec=False):
         clf = []
@@ -44,7 +44,7 @@ if __name__ == '__main__':
         clf = Pipeline(clf)
         return clf 
     results_ = []# for saving all the results
-    saving_dir = 'C:\\Users\\ning\\OneDrive\\python works\\VCRT_study\\results\\'
+    saving_dir = 'D:\\NING - spindle\\VCRT_study\\results\\'
     if not os.path.exists(saving_dir):
         os.mkdir(saving_dir)
     ################# first iteration: not shuffling the order of the subjects #################################
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     
     cv = StratifiedKFold(n_splits=5,shuffle=True,random_state=12345)# 5 fold stratified cross validation
     clfs = []
-#    fig, axes = plt.subplots(figsize=(5,16),nrows=3,ncols=1)
+    fig, axes = plt.subplots(figsize=(5,16),nrows=3,ncols=1)
     colors = ['k','blue','yellow','green','red']
     times = np.vstack([np.arange(0,1450,50)[:-1],np.arange(0,1450,50)[1:]]).T 
     for (train,test),color in zip(cv.split(data,labels),colors):# split the data into training set and testing set
