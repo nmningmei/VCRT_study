@@ -23,7 +23,7 @@ This script is to demonstrate the process of decoding old (coded 0) and new (cod
 """
 if __name__ == '__main__':
     import os
-#    os.chdir('D://Epochs')
+    os.chdir('D:\\NING - spindle\\VCRT_study\\scripts')
     import avr_reader 
     import mne
     import numpy as np
@@ -42,51 +42,12 @@ if __name__ == '__main__':
     from tqdm import tqdm
     from mne.decoding import Vectorizer
     from scipy import stats
-    ###### from line 46 to line 84 are for stacked the data. Original data was processed by BESA analysis
-#    """
-#    New images: code 1,2,3,4
-#    """
-#    os.chdir('D:\\VCRT-v1\\New Images (Cond4, Set1,2,3)')
-#    avrs = glob('*.avr')
-#    data = []
-#    for f in avrs:
-#        temp = avr_reader.avr(f)
-#        channelNames = temp['channelNames'][:-3]
-#        data.append(temp['data'][:-3])
-#    info = mne.create_info(ch_names=channelNames,sfreq = 1000,ch_types='eeg')#montage='standard_1020')
-#    data = np.array(data)
-#    data = data / 1e6
-#    new = mne.EpochsArray(data,info)
-#    #Epochs.set_channel_types({'LOC':'eog','ROC':'eog','AUX':'stim'})
-#    new.set_montage(mne.channels.read_montage('standard_1020'))
-#    new.event_id = {'new':1}
-#    """
-#    Old images: 5
-#    """
-#    os.chdir('D:\\VCRT-v1\\Old Images (sets 1,2,3)')
-#    avrs = glob('*.avr')
-#    avrs = avrs[1:]
-#    data = []
-#    for f in avrs:
-#        temp = avr_reader.avr(f)
-#        channelNames = temp['channelNames'][:-3]
-#        data.append(temp['data'][:-3])
-#    info = mne.create_info(ch_names=channelNames,sfreq = 1000,ch_types='eeg')#montage='standard_1020')
-#    data = np.array(data)
-#    data = data / 1e6
-#    old = mne.EpochsArray(data,info)
-#    #Epochs.set_channel_types({'LOC':'eog','ROC':'eog','AUX':'stim'})
-#    old.set_montage(mne.channels.read_montage('standard_1020'))
-#    old.events[:,-1] = 0
-#    old.event_id = {'old':0}
-#    epochs = mne.concatenate_epochs([old,new])
-#    old = epochs['old'].average()
-#    new = epochs['new'].average()
+
     # load the epoch data converted from BESA to MNE-python epoch object
-    os.chdir('C:\\Users\\ning\\OneDrive\\python works\\VCRT_study\\data')
-    epochs  = mne.read_epochs('old vs new-epo.fif',preload=True)
+    os.chdir('D:\\NING - spindle\\VCRT_study\\data\\0.1-40 Hz')
+    epochs  = mne.read_epochs('new vs old-epo.fif',preload=True)
     # define the classification pipeline that is used later
-    def make_clf(vec=False):
+    def make_clf(vec=True):
         clf = []
         if vec:# if the training data has more than 2 dimensions, the vectorization must perform on the last two dimensions
             clf.append(('vec',Vectorizer()))
@@ -102,7 +63,7 @@ if __name__ == '__main__':
         clf = Pipeline(clf)
         return clf 
     results_ = []# for saving all the results
-    saving_dir = 'C:\\Users\\ning\\OneDrive\\python works\\VCRT_study\\results\\'
+    saving_dir = 'D:\\NING - spindle\\VCRT_study\\results\\'
     if not os.path.exists(saving_dir):
         os.mkdir(saving_dir)
     ################# first iteration: not shuffling the order of the subjects #################################
@@ -115,11 +76,11 @@ if __name__ == '__main__':
     clfs = []
     scores = []
     patterns = []
-    fig, axes = plt.subplots(figsize=(25,16),nrows=4,ncols=7)
+#    fig, axes = plt.subplots(figsize=(25,16),nrows=4,ncols=7)
     times = np.vstack([np.arange(0,1450,50)[:-1],np.arange(0,1450,50)[1:]]).T 
     for train,test in tqdm(cv.split(data,labels),desc='train-test'):# split the data into training set and testing set
-        X = data[train]
-        y = labels[train]
+        X = data[train]# 44 by 61 by 1400
+        y = labels[train]# 44 labels
         # fit a classifier at each of the 50 ms window with only the training data and record the trained classifier
         clfs.append([make_clf(True).fit(X[:,:,ii],y) for ii in idx])
         # get the decoding pattern learned by each trained classifier at each of the 50 ms window with only the training data
@@ -130,20 +91,24 @@ if __name__ == '__main__':
         # compute the performance of each trained classifier at each of the 50 ms window with the testing data
         scores_ = [metrics.roc_auc_score(y_,clf.predict_proba(X_[:,:,ii])[:,-1]) for ii,clf in zip(idx,clfs[-1])]
         scores.append(scores_)
-        # plot roc curves of the decoding and save them
-        rocs = np.array([metrics.roc_curve(y_,clf.predict_proba(X_[:,:,ii])[:,-1]) for ii,clf in zip(idx,clfs[-1])])
-        
-        for ii,(roc_,ax,(start,stop)) in enumerate(zip(rocs,axes.flatten(),times)):
-            fpr,tpr,th = roc_
-            ax.plot(fpr,tpr,color='blue',)
-            ax.set(xlim=(0,1),ylim=(0,1),)
-            ax.plot([0, 1], [0, 1], linestyle='--',color='red')
-            ax.set(title='%d-%d ms'%(start,stop))
-            
-            
+#        # plot roc curves of the decoding and save them
+#        rocs = np.array([metrics.roc_curve(y_,clf.predict_proba(X_[:,:,ii])[:,-1]) for ii,clf in zip(idx,clfs[-1])])
+#        
+#        for ii,(roc_,ax,(start,stop)) in enumerate(zip(rocs,axes.flatten(),times)):
+#            fpr,tpr,th = roc_
+#            ax.plot(fpr,tpr,color='blue',)
+#            ax.set(xlim=(0,1),ylim=(0,1),)
+#            ax.plot([0, 1], [0, 1], linestyle='--',color='red')
+#            ax.set(title='%d-%d ms'%(start,stop))
+#            
+#            
     scores = np.array(scores)
     patterns=np.array(patterns)
+    ##############################################################################################
+    ##############################################################################################
     ####################### Temporal gnenralization   ############################################
+    ###### train classifiers at each time sample and test the classifiers in other time samples###
+    ###### this is going to take a long time to run ##############################################
     cv = StratifiedKFold(n_splits=5,shuffle=True,random_state=12345)
     clfs = [] # first we train 5 classifiers on each time point by a subset of the trials
     for train,test in tqdm(cv.split(data,labels),desc='training'):
@@ -180,8 +145,10 @@ if __name__ == '__main__':
     ax.set(xlabel='Test time (ms)',ylabel='Train time (ms)',
            title='Old vs New Temporal Generalization\nLinear SVM, 5-fold CV')
     fig.savefig(saving_dir+'Old vs New decoding generalization.png',dpi=500)
+    ##############################################################################################
+    ##############################################################################################
     ######################### chance estimation n_perm = 10000 #############
-    ###### to get the chance level performance, you can uncomment level 178 to line 183 #########
+    ###### to get the chance level performance, you can uncomment level 157 to line 176 #########
     ###### It it going to take very long time #############
     ###### 1. randomly shuffle the labels while the order of the feature data matrix remain the same
     ###### 2. Perform the same cross validation as shown above
@@ -189,22 +156,23 @@ if __name__ == '__main__':
     
     cv = StratifiedKFold(n_splits=5,shuffle=True,random_state=12345)# 5 fold cross validation
     n_perm = 1000
-#    chances = []
-#    for n_perm in tqdm(range(n_perm),desc='permutation test'):# the most outer loop of the permutation test
-#        chances_ = []# second order temporal data storage
-#        # during each permutation, we randomly shuffle the labels, so that there should not be any informative patterns
-#        # that could be learned by the classifier. In other words, the feature data does not correlate to the labels
-#        perm_labels = labels[np.random.choice(len(labels),size=labels.shape,replace=False)]
-#        for train,test in cv.split(data,labels):# do the same procedure as a real cross validation
-#            X = data[train]
-#            y = perm_labels[train]
-#            X_ = data[test]
-#            y_ = perm_labels[test]
-#            clfs_=[make_clf().fit(X[:,:,ii],y) for ii in idx]
-#            scores_ = [metrics.roc_auc_score(y_,clf.predict_proba(X_[:,:,ii])[:,-1]) for ii,clf in zip(idx,clfs_)]
-#            chances_.append(scores_)
-#        chances.append(chances_)
-#    chances = np.array(chances)  
+    chances = []
+    for n_perm in tqdm(range(n_perm),desc='permutation test'):# the most outer loop of the permutation test
+        chances_ = []# second order temporal data storage
+        # during each permutation, we randomly shuffle the labels, so that there should not be any informative patterns
+        # that could be learned by the classifier. In other words, the feature data does not correlate to the labels
+        perm_labels = labels[np.random.choice(len(labels),size=labels.shape,replace=False)]
+        for train,test in cv.split(data,labels):# do the same procedure as a real cross validation
+            X = data[train]
+            y = perm_labels[train]
+            X_ = data[test]
+            y_ = perm_labels[test]
+            clfs_=[make_clf().fit(X[:,:,ii],y) for ii in idx]
+            scores_ = [metrics.roc_auc_score(y_,clf.predict_proba(X_[:,:,ii])[:,-1]) for ii,clf in zip(idx,clfs_)]
+            chances_.append(scores_)
+        chances.append(chances_)
+    chances = np.array(chances)  
+    np.save(saving_dir+"chance (old vs new).npy",chances)
     chances = np.load(saving_dir+"chance (old vs new).npy")
     # percentage of chance scores that exceed the observed score, and if it is less than 0.05, 
     # we claim the observed score statistically significant higher than chance level
@@ -220,10 +188,10 @@ if __name__ == '__main__':
     # average pattern learned by the classifier over 5 folds
     results['activity']=patterns.mean(-1).mean(0)
     pickle.dump(results,open(saving_dir+'temp_no_shuffle (old vs new).p','wb'))
-#    results_.append(results)
-    np.save(saving_dir+"chance (old vs new).npy", chances)
+    results_.append(results)
+
     
-    for i_random in range(10):
+    for i_random in range(10):# experimenting how shuffling the data affects the classification scores
         data = epochs.get_data() # 54 by 61 by 1400 matrix
         labels = epochs.events[:,-1]#  this is [0 0 0 0 ... 0 0 1 1 1 1 ... 1 1 1]
         results={'scores_mean':[],'scores_std':[],'clf':[],'chance_mean':[],'pval':[],'activity':[],'chance_se':[]}
@@ -265,9 +233,9 @@ if __name__ == '__main__':
         # average pattern learned by the classifier over 5 folds
         results['activity']=patterns.mean(-1).mean(0)
         pickle.dump(results,open(saving_dir+'temp_shuffle_%d (old vs new).p'%i_random,'wb'))
-#        results_.append(results)
+        results_.append(results)
     
-#    pickle.dump(results_,open(saving_dir+'shuffle results (old vs new).p','wb'))
+    pickle.dump(results_,open(saving_dir+'shuffle results (old vs new).p','wb'))
         
         
 ############### plot ######################################################################
@@ -282,7 +250,7 @@ results = [pickle.load(open(f,'rb')) for f in shuffle_files]
 no_shuffle = results[0]
 shuffle = results[1:] 
 import mne
-epochs = mne.read_epochs('D://Epochs//old vs new-epo.fif',preload=False)
+epochs = mne.read_epochs('D:\\NING - spindle\\VCRT_study\\data\\0.1-40 Hz\\new vs old-epo.fif',preload=False)
 font = {
         'weight' : 'bold',
         'size'   : 20}
@@ -323,12 +291,8 @@ pvals = np.vstack((no_shuffle['pval'],pvals),)
 pval_set = np.sum(pvals < 0.05, axis=0)
 pval_idx = np.where(pval_set> (11/2))[0]    
     
-<<<<<<< HEAD
- sample_result = results[1]
-=======
 
 sample_result = results[1]
->>>>>>> origin/master
 
 times = np.vstack([np.arange(0,1450,50)[:-1],np.arange(0,1450,50)[1:]]).T
 fig, axes = plt.subplots(figsize=(14,9),nrows=4,ncols=7)
@@ -354,12 +318,8 @@ cbar = fig.colorbar(im, cax=cb_ax)
 cbar.set_ticks([-k, 0, k])
 cbar.set_ticklabels(['old image', 'no difference', 'new image'])
 cbar.ax.set_title('         $\Delta$ $\mu$V = New - Old')
-<<<<<<< HEAD
-fig.savefig('D:\\NING - spindle\\VCRT_study\\results\\'+'old vs new topomap.png',dpi=500,bbox_inches='tight')   
-    
-=======
 fig.savefig('D:\\NING - spindle\\VCRT_study\\results\\'+'old vs new topomap.png',dpi=500,bbox_inches='tight')
->>>>>>> origin/master
+
  
     
     
