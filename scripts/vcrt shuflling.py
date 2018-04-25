@@ -253,7 +253,7 @@ from matplotlib import pyplot as plt
 import pickle
 import numpy as np
 from glob import glob
-working_dir = 'D:\\Epochs\\vcrt results\\'
+working_dir = 'D:\\NING - spindle\\VCRT_study\\results\\'
 shuffle_files = glob(working_dir+'*_shuffle*(old vs new).p')
 results = [pickle.load(open(f,'rb')) for f in shuffle_files]
 no_shuffle = results[0]
