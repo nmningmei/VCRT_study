@@ -12,8 +12,8 @@ import mne
 import numpy as np
 from glob import glob
 
-news = glob('D:\\NING - spindle\\VCRT_study\\data\\new\\*.avr')
-olds = glob('D:\\NING - spindle\\VCRT_study\\data\\old\\*.avr')
+news = glob('D:\\NING - spindle\\VCRT_study\\data\\new\\*-export10-export.avr')
+olds = glob('D:\\NING - spindle\\VCRT_study\\data\\old\\*-export9-export.avr')
 scrs = glob('D:\\NING - spindle\\VCRT_study\\data\\scr\\*.avr')
 
 data = []
