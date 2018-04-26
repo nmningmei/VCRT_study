@@ -119,29 +119,29 @@ if __name__ == '__main__':
     n_perm = 1000
     counts = 0
     chances = []
-    for n_perm_ in tqdm(range(int(1e5)),desc='permutation test'):# the most outer loop of the permutation test
-        try:# the stratified k fold cross validation might not work for some runs, but it doesn't matter, so I skip them
-            chances_ = []# second order temporal data storage
-            # during each permutation, we randomly shuffle the labels, so that there should not be any informative patterns
-            # that could be learned by the classifier. In other words, the feature data does not correlate to the labels
-            perm_labels = labels[np.random.choice(len(labels),size=labels.shape,replace=False)]
-            for train,test in cv.split(data,labels):# do the same procedure as a real cross validation
-                X = data[train]
-                y = perm_labels[train]
-                X_ = data[test]
-                y_ = perm_labels[test]
-                clfs_=[make_clf().fit(X[:,:,ii],y) for ii in idx]
-                scores_ = [metrics.roc_auc_score(y_,clf.predict_proba(X_[:,:,ii])[:,-1]) for ii,clf in zip(idx,clfs_)]
-                chances_.append(scores_)
-            chances.append(chances_)
-            counts += 1
-        except:
-            print("something is wrong, but I don't care")
-        if counts > n_perm:
-            break
-        
-    chances = np.array(chances)  
-    np.save(saving_dir+"chance (old vs new).npy",chances)
+#    for n_perm_ in tqdm(range(int(1e5)),desc='permutation test'):# the most outer loop of the permutation test
+#        try:# the stratified k fold cross validation might not work for some runs, but it doesn't matter, so I skip them
+#            chances_ = []# second order temporal data storage
+#            # during each permutation, we randomly shuffle the labels, so that there should not be any informative patterns
+#            # that could be learned by the classifier. In other words, the feature data does not correlate to the labels
+#            perm_labels = labels[np.random.choice(len(labels),size=labels.shape,replace=False)]
+#            for train,test in cv.split(data,labels):# do the same procedure as a real cross validation
+#                X = data[train]
+#                y = perm_labels[train]
+#                X_ = data[test]
+#                y_ = perm_labels[test]
+#                clfs_=[make_clf().fit(X[:,:,ii],y) for ii in idx]
+#                scores_ = [metrics.roc_auc_score(y_,clf.predict_proba(X_[:,:,ii])[:,-1]) for ii,clf in zip(idx,clfs_)]
+#                chances_.append(scores_)
+#            chances.append(chances_)
+#            counts += 1
+#        except:
+#            print("something is wrong, but I don't care")
+#        if counts > n_perm:
+#            break
+#        
+#    chances = np.array(chances)  
+#    np.save(saving_dir+"chance (old vs new).npy",chances)
     chances = np.load(saving_dir+"chance (old vs new).npy")
     # percentage of chance scores that exceed the observed score, and if it is less than 0.05, 
     # we claim the observed score statistically significant higher than chance level
@@ -295,17 +295,13 @@ ax.legend(fontsize='small')
 fig.savefig('D:\\NING - spindle\\VCRT_study\\results\\'+'old vs new temporal decoding.png',dpi=500,bbox_inches = 'tight')  
 
 
-pvals = np.vstack([item['pval'] for item in results[1:]])    
-pvals = np.vstack((no_shuffle['pval'],pvals),)
-pval_set = np.sum(pvals < 0.05, axis=0)
-pval_idx = np.where(pval_set> (11/2))[0]    
-    
 
-sample_result = results[1]
+
+sample_result = results[5]
 
 times = np.vstack([np.arange(0,1450,50)[:-1],np.arange(0,1450,50)[1:]]).T
-fig, axes = plt.subplots(figsize=(14,9),nrows=4,ncols=7)
-k =5e-7
+fig, axes = plt.subplots(figsize=(20,12),nrows=4,ncols=7)
+k =8e-7
 for idx,((start,stop),score,pvalue,ax,activity) in enumerate(zip(times,sample_result['scores_mean'],
                                                                 sample_result['pval'],
                                                                 axes.flatten(),
