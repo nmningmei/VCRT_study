@@ -14,7 +14,7 @@ from glob import glob
 
 news = glob('D:\\NING - spindle\\VCRT_study\\data\\new\\*-export10-export.avr')
 olds = glob('D:\\NING - spindle\\VCRT_study\\data\\old\\*-export9-export.avr')
-scrs = glob('D:\\NING - spindle\\VCRT_study\\data\\scr\\*.avr')
+scrs = glob('D:\\NING - spindle\\VCRT_study\\data\\scr\\*-export5-export.avr')
 
 data = []
 for f in news:

@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
     # load the epoch data converted from BESA to MNE-python epoch object
     os.chdir('D:\\NING - spindle\\VCRT_study\\data\\0.1-40 Hz')
-    epochs  = mne.read_epochs('new vs old-epo.fif',preload=True)
+    epochs  = mne.read_epochs('D:/NING - spindle/VCRT_study/data/0.1-40 Hz/new vs old-epo.fif',preload=True)
 #    epochs.filter(0.1,40,)
     # define the classification pipeline that is used later
     def make_clf(vec=True):
@@ -109,7 +109,7 @@ if __name__ == '__main__':
     ##############################################################################################
     ##############################################################################################
     ######################### chance estimation n_perm = 10000 #############
-    ###### to get the chance level performance, you can uncomment level 157 to line 176 #########
+    ###### to get the chance level performance, you can uncomment level 122 to line 144 #########
     ###### It it going to take very long time #############
     ###### 1. randomly shuffle the labels while the order of the feature data matrix remain the same
     ###### 2. Perform the same cross validation as shown above
@@ -265,7 +265,7 @@ font = {
         'size'   : 20}
 import matplotlib
 matplotlib.rc('font', **font)
-fig,ax = plt.subplots(figsize=(16,8))
+fig,ax = plt.subplots(figsize=(16,10))
 times = np.linspace(25,1375,28)
 ax.plot(times,no_shuffle['scores_mean'],color='k',alpha=1.,label='Classifi.Score (AUC Mean)_no shuffle')
 m,s = np.array(no_shuffle['scores_mean']),np.array(no_shuffle['scores_std'])/np.sqrt(5)
@@ -300,7 +300,7 @@ fig.savefig('D:\\NING - spindle\\VCRT_study\\results\\'+'old vs new temporal dec
 sample_result = results[5]
 
 times = np.vstack([np.arange(0,1450,50)[:-1],np.arange(0,1450,50)[1:]]).T
-fig, axes = plt.subplots(figsize=(20,12),nrows=4,ncols=7)
+fig, axes = plt.subplots(figsize=(26,14),nrows=4,ncols=7)
 k =8e-7
 for idx,((start,stop),score,pvalue,ax,activity) in enumerate(zip(times,sample_result['scores_mean'],
                                                                 sample_result['pval'],

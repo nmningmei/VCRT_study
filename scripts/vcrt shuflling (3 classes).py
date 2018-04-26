@@ -45,46 +45,7 @@ if __name__ == '__main__':
     from mne.decoding import Vectorizer
     from scipy import stats
     from sklearn.multiclass import OneVsOneClassifier
-#    """
-#    New images: code 1,2,3,4
-#    """
-#    os.chdir('D:\\VCRT-v1\\New Images (Cond4, Set1,2,3)')
-#    avrs = glob('*.avr')
-#    data = []
-#    for f in avrs:
-#        temp = avr_reader.avr(f)
-#        channelNames = temp['channelNames'][:-3]
-#        data.append(temp['data'][:-3])
-#    info = mne.create_info(ch_names=channelNames,sfreq = 1000,ch_types='eeg')#montage='standard_1020')
-#    data = np.array(data)
-#    data = data / 1e6
-#    new = mne.EpochsArray(data,info)
-#    #Epochs.set_channel_types({'LOC':'eog','ROC':'eog','AUX':'stim'})
-#    new.set_montage(mne.channels.read_montage('standard_1020'))
-#    new.event_id = {'new':1}
-#    """
-#    Old images: 5
-#    """
-#    os.chdir('D:\\VCRT-v1\\Old Images (sets 1,2,3)')
-#    avrs = glob('*.avr')
-#    avrs = avrs[1:]
-#    data = []
-#    for f in avrs:
-#        temp = avr_reader.avr(f)
-#        channelNames = temp['channelNames'][:-3]
-#        data.append(temp['data'][:-3])
-#    info = mne.create_info(ch_names=channelNames,sfreq = 1000,ch_types='eeg')#montage='standard_1020')
-#    data = np.array(data)
-#    data = data / 1e6
-#    old = mne.EpochsArray(data,info)
-#    #Epochs.set_channel_types({'LOC':'eog','ROC':'eog','AUX':'stim'})
-#    old.set_montage(mne.channels.read_montage('standard_1020'))
-#    old.events[:,-1] = 0
-#    old.event_id = {'old':0}
-#    epochs = mne.concatenate_epochs([old,new])
-#    old = epochs['old'].average()
-#    new = epochs['new'].average()
-    epochs  = mne.read_epochs('D://Epochs//3 class-epo.fif',preload=True)
+    epochs  = mne.read_epochs('D:/NING - spindle/VCRT_study/data/0.1-40 Hz/3 classes-epo.fif',preload=True)
     def make_clf(vec=False):
         clf = []
         if vec:
@@ -160,24 +121,24 @@ if __name__ == '__main__':
            title='Old vs New vs Scramble Temporal Generalization\nLinear SVM, 5-fold CV')
     fig.savefig(saving_dir+'Old vs New vs scr decoding generalization.png',dpi=500)
     ######################### chance estimation n_perm = 10000 #############
-#    cv = StratifiedKFold(n_splits=5,shuffle=True,random_state=12345)# 5 fold cross validation
+    cv = StratifiedKFold(n_splits=5,shuffle=True,random_state=12345)# 5 fold cross validation
     n_perm = 1000
-#    chances = []
-#    for n_perm in tqdm(range(n_perm),desc='permutation test'):# the most outer loop of the permutation test
-#        chances_ = []# second order temporal data storage
-#        # during each permutation, we randomly shuffle the labels, so that there should not be any informative patterns
-#        # that could be learned by the classifier. In other words, the feature data does not correlate to the labels
-#        perm_labels = labels[np.random.choice(len(labels),size=labels.shape,replace=False)]
-#        for train,test in cv.split(data,labels):# do the same procedure as a real cross validation
-#            X = data[train]
-#            y = perm_labels[train]
-#            X_ = data[test]
-#            y_ = perm_labels[test]
-#            clfs_=[make_clf().fit(X[:,:,ii],y) for ii in idx]
-#            scores_ = [metrics.roc_auc_score(y_,clf.predict_proba(X_[:,:,ii])[:,-1]) for ii,clf in zip(idx,clfs_)]
-#            chances_.append(scores_)
-#        chances.append(chances_)
-#    chances = np.array(chances)  
+    chances = []
+    for n_perm in tqdm(range(n_perm),desc='permutation test'):# the most outer loop of the permutation test
+        chances_ = []# second order temporal data storage
+        # during each permutation, we randomly shuffle the labels, so that there should not be any informative patterns
+        # that could be learned by the classifier. In other words, the feature data does not correlate to the labels
+        perm_labels = labels[np.random.choice(len(labels),size=labels.shape,replace=False)]
+        for train,test in cv.split(data,labels):# do the same procedure as a real cross validation
+            X = data[train]
+            y = perm_labels[train]
+            X_ = data[test]
+            y_ = perm_labels[test]
+            clfs_=[make_clf().fit(X[:,:,ii],y) for ii in idx]
+            scores_ = [metrics.roc_auc_score(y_,clf.predict_proba(X_[:,:,ii])[:,-1]) for ii,clf in zip(idx,clfs_)]
+            chances_.append(scores_)
+        chances.append(chances_)
+    chances = np.array(chances)  
     chances = np.load(saving_dir+"chance (3 class).npy")
     # percentage of chance scores that exceed the observed score, and if it is less than 0.05, 
     # we claim the observed score statistically significant higher than chance level
