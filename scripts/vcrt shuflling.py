@@ -35,7 +35,7 @@ if __name__ == '__main__':
     import pickle
     from mne.decoding import LinearModel,get_coef,SlidingEstimator,cross_val_multiscore,GeneralizationAcrossTime
     from sklearn.model_selection import StratifiedKFold,permutation_test_score,cross_val_score
-    from sklearn.preprocessing import StandardScaler
+    from sklearn.preprocessing import StandardScaler,Normalizer
     from sklearn.svm import SVC
     from sklearn.pipeline import Pipeline
     from sklearn import metrics,utils
@@ -53,6 +53,7 @@ if __name__ == '__main__':
         if vec:# if the training data has more than 2 dimensions, the vectorization must perform on the last two dimensions
             clf.append(('vec',Vectorizer()))
         clf.append(('std',StandardScaler()))# subtract the mean and divided by the standard deviation
+#        clf.append(('std',Normalizer()))
         # parameters:
         # C: penalty term. Here I choose a small penalty to obtain better classification results
         # max_iter: set to -1 so that the classification wouldn't stop until the tol is less thatn 1e-3
@@ -60,8 +61,8 @@ if __name__ == '__main__':
         # class_weight: to balance the class weight in case there is any
         # kernel: linear kernel for linear classification performance
         # probability: tell the classifier to compute probabilistic predictions for the instances
-        clf.append(('est',LinearModel(SVC(C=.01,max_iter=-1,random_state=12345,class_weight='balanced',
-                                          kernel='linear',probability=True))))
+        clf.append(('est',LinearModel(SVC(C=100,max_iter=-1,random_state=12345,class_weight='balanced',
+                                          kernel='linear',probability=True,tol=0.001))))
         clf = Pipeline(clf)
         return clf 
     results_ = []# for saving all the results
@@ -85,8 +86,12 @@ if __name__ == '__main__':
         y = labels[train]# 44 labels
         # fit a classifier at each of the 50 ms window with only the training data and record the trained classifier
         clfs.append([make_clf(True).fit(X[:,:,ii],y) for ii in idx])
+        
         # get the decoding pattern learned by each trained classifier at each of the 50 ms window with only the training data
         temp_patterns = np.array([get_coef(c,attr='patterns_',inverse_transform=True) for c in clfs[-1]])
+        if temp_patterns.shape[-1] != 50:
+            vecl = Vectorizer().fit(X[:,:,idx[0]])
+            temp_patterns = np.array([vecl.inverse_transform(temp.reshape(1,-1))[0] for temp in temp_patterns])
         patterns.append(temp_patterns)
         X_ = data[test]
         y_ = labels[test]
@@ -182,6 +187,9 @@ if __name__ == '__main__':
             clfs.append([make_clf(True).fit(X[:,:,ii],y) for ii in idx])
             # get the decoding pattern learned by each trained classifier at each of the 50 ms window with only the training data
             temp_patterns = np.array([get_coef(c,attr='patterns_',inverse_transform=True) for c in clfs[-1]])
+            if temp_patterns.shape[-1] != 50:
+                vecl = Vectorizer().fit(X[:,:,idx[0]])
+                temp_patterns = np.array([vecl.inverse_transform(temp.reshape(1,-1))[0] for temp in temp_patterns])
             patterns.append(temp_patterns)
             X_ = data[test]
             y_ = labels[test]
@@ -207,48 +215,48 @@ if __name__ == '__main__':
         results_.append(results)
     
     pickle.dump(results_,open(saving_dir+'shuffle results (old vs new).p','wb'))
-        
+    del results_    
     ##############################################################################################
     ##############################################################################################
     ####################### Temporal gnenralization   ############################################
     ###### train classifiers at each time sample and test the classifiers in other time samples###
     ###### this is going to take a long time to run ##############################################
-    cv = StratifiedKFold(n_splits=5,shuffle=True,random_state=12345)
-    clfs = [] # first we train 5 classifiers on each time point by a subset of the trials
-    for train,test in tqdm(cv.split(data,labels),desc='training'):
-        X = data[train]
-        y = labels[train]
-        clfs.append([make_clf().fit(X[:,:,ii],y) for ii in range(X.shape[-1])])
-        
-    scores_within = []# second, we test each 5 classifiers trained at a given time point at all possible time points
-    for fold,(train,test) in tqdm(enumerate(cv.split(data,labels)),desc='test within'):
-        X = data[test]
-        y = labels[test]   
-        scores_ = []
-        for clf in clfs[fold]:
-            scores_temp = [metrics.roc_auc_score(y,clf.predict_proba(X[:,:,ii])[:,-1]) for ii in range(X.shape[-1])]
-            scores_.append(scores_temp)
-        scores_within.append(scores_)
-    scores_within = np.array(scores_within)
-    
-    pickle.dump(scores_within,open(saving_dir+'temporal generalization(old vs new).p','wb'))
-    scores_within = pickle.load(open(saving_dir+'temporal generalization(old vs new).p','rb'))
-    
-    font = {
-            'weight' : 'bold',
-            'size'   : 20}
-    import matplotlib
-    matplotlib.rc('font', **font)
-    ### plot the temporal generalization 
-    fig,ax = plt.subplots(figsize=(12,10))
-    im = ax.imshow(scores_within.mean(0),# take the mean over the 5-fold cross validation
-                   origin='lower',aspect='auto',extent=[0,1400,0,1400],# some plotting thing
-                   cmap=plt.cm.RdBu_r,vmin=.5)# set the colormap and lowest value
-    cbar=plt.colorbar(im)
-    cbar.set_label('AUC')
-    ax.set(xlabel='Test time (ms)',ylabel='Train time (ms)',
-           title='Old vs New Temporal Generalization\nLinear SVM, 5-fold CV')
-    fig.savefig(saving_dir+'Old vs New decoding generalization.png',dpi=500)        
+#    cv = StratifiedKFold(n_splits=5,shuffle=True,random_state=12345)
+#    clfs = [] # first we train 5 classifiers on each time point by a subset of the trials
+#    for train,test in tqdm(cv.split(data,labels),desc='training'):
+#        X = data[train]
+#        y = labels[train]
+#        clfs.append([make_clf().fit(X[:,:,ii],y) for ii in range(X.shape[-1])])
+#        
+#    scores_within = []# second, we test each 5 classifiers trained at a given time point at all possible time points
+#    for fold,(train,test) in tqdm(enumerate(cv.split(data,labels)),desc='test within'):
+#        X = data[test]
+#        y = labels[test]   
+#        scores_ = []
+#        for clf in clfs[fold]:
+#            scores_temp = [metrics.roc_auc_score(y,clf.predict_proba(X[:,:,ii])[:,-1]) for ii in range(X.shape[-1])]
+#            scores_.append(scores_temp)
+#        scores_within.append(scores_)
+#    scores_within = np.array(scores_within)
+#    
+#    pickle.dump(scores_within,open(saving_dir+'temporal generalization(old vs new).p','wb'))
+#    scores_within = pickle.load(open(saving_dir+'temporal generalization(old vs new).p','rb'))
+#    
+#    font = {
+#            'weight' : 'bold',
+#            'size'   : 20}
+#    import matplotlib
+#    matplotlib.rc('font', **font)
+#    ### plot the temporal generalization 
+#    fig,ax = plt.subplots(figsize=(12,10))
+#    im = ax.imshow(scores_within.mean(0),# take the mean over the 5-fold cross validation
+#                   origin='lower',aspect='auto',extent=[0,1400,0,1400],# some plotting thing
+#                   cmap=plt.cm.RdBu_r,vmin=.5)# set the colormap and lowest value
+#    cbar=plt.colorbar(im)
+#    cbar.set_label('AUC')
+#    ax.set(xlabel='Test time (ms)',ylabel='Train time (ms)',
+#           title='Old vs New Temporal Generalization\nLinear SVM, 5-fold CV')
+#    fig.savefig(saving_dir+'Old vs New decoding generalization.png',dpi=500)        
 
 
 

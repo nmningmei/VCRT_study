@@ -46,7 +46,7 @@ if __name__ == '__main__':
     from scipy import stats
     from sklearn.multiclass import OneVsOneClassifier
     epochs  = mne.read_epochs('D:/NING - spindle/VCRT_study/data/0.1-40 Hz/3 classes-epo.fif',preload=True)
-    def make_clf(vec=False):
+    def make_clf(vec=True):
         clf = []
         if vec:
             clf.append(('vec',Vectorizer()))
@@ -61,7 +61,7 @@ if __name__ == '__main__':
         os.mkdir(saving_dir)
     ################# first iteration: not shuffling the order of the subjects #################################
     data = epochs.get_data() # 54 by 61 by 1400 matrix
-    labels = epochs.events[:,-1]#  this is [0 0 0 0 ... 0 0 1 1 1 1 ... 1 1 1]
+    labels = epochs.events[:,-1]#  this is [0 0 0 0 ... 0 0 1 1 1 1 ... 1 1 1...2 2 2]
     results={'scores_mean':[],'scores_std':[],'clf':[],'chance_mean':[],'pval':[],'activity':[],'chance_se':[]}
     idx = np.arange(data.shape[-1]).reshape(-1,50) # 28 by 50 matrix
     
@@ -135,7 +135,7 @@ if __name__ == '__main__':
             X_ = data[test]
             y_ = perm_labels[test]
             clfs_=[make_clf().fit(X[:,:,ii],y) for ii in idx]
-            scores_ = [metrics.roc_auc_score(y_,clf.predict_proba(X_[:,:,ii])[:,-1]) for ii,clf in zip(idx,clfs_)]
+            scores_ = [metrics.f1_score(y_,clf.predict_proba(X_[:,:,ii])[:,-1]) for ii,clf in zip(idx,clfs_)]
             chances_.append(scores_)
         chances.append(chances_)
     chances = np.array(chances)  
