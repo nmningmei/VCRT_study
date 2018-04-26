@@ -52,7 +52,7 @@ if __name__ == '__main__':
             clf.append(('vec',Vectorizer()))
         clf.append(('std',StandardScaler()))
         clf.append(('est',OneVsOneClassifier(SVC(max_iter=-1,random_state=12345,class_weight='balanced',
-                                          kernel='linear',probability=True))))
+                                          kernel='linear',probability=False))))
         clf = Pipeline(clf)
         return clf 
     results_ = []# for saving all the results
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     scores = []
 #    patterns = []
     idx = np.arange(1400).reshape(-1,50)
-    for train,test in tqdm(cv.split(data,labels),desc='train-test'):# split the data into training set and testing set
+    for train,test in tqdm(cv.split(data,labels),desc='train-test,no shuffle'):# split the data into training set and testing set
         X = data[train]
         y = labels[train]
         # fit a classifier at each of the 50 ms window with only the training data and record the trained classifier
@@ -85,6 +85,88 @@ if __name__ == '__main__':
         scores.append(scores_)
     scores = np.array(scores)
 #    patterns=np.array(patterns)
+    
+    ######################### chance estimation n_perm = 10000 #############
+    cv = StratifiedKFold(n_splits=5,shuffle=True,random_state=12345)# 5 fold cross validation
+    n_perm = 1000
+    chances = []
+    for n_perm in tqdm(range(n_perm),desc='permutation test'):# the most outer loop of the permutation test
+        chances_ = []# second order temporal data storage
+        # during each permutation, we randomly shuffle the labels, so that there should not be any informative patterns
+        # that could be learned by the classifier. In other words, the feature data does not correlate to the labels
+        perm_labels = labels[np.random.choice(len(labels),size=labels.shape,replace=False)]
+        for train,test in cv.split(data,labels):# do the same procedure as a real cross validation
+            X = data[train]
+            y = perm_labels[train]
+            X_ = data[test]
+            y_ = perm_labels[test]
+            clfs_=[make_clf().fit(X[:,:,ii],y) for ii in idx]
+            scores_ = [metrics.f1_score(y_,clf.predict(X_[:,:,ii])[:,-1]) for ii,clf in zip(idx,clfs_)]
+            chances_.append(scores_)
+        chances.append(chances_)
+    chances = np.array(chances)  
+    np.save(saving_dir+"chance (3 class).npy", chances)
+    chances = np.load(saving_dir+"chance (3 class).npy")
+    # percentage of chance scores that exceed the observed score, and if it is less than 0.05, 
+    # we claim the observed score statistically significant higher than chance level
+    pval = (np.array(chances.mean(1) > scores.mean(0)).sum(0)+1) / (n_perm +1) 
+    
+    results['scores_mean']=scores.mean(0)
+    results['scores_std']=scores.std(0)
+    results['chance_mean']=np.mean(chances,axis=1).mean(0)
+    results['chance_se']=np.std(chances.mean(1))/np.sqrt(n_perm)# standard error
+    results['clf']=clfs
+    results['pval']=pval
+    # average pattern learned by last dimension, which is the 50 ms window
+    # average pattern learned by the classifier over 5 folds
+#    results['activity']=patterns.mean(-1).mean(0)
+    pickle.dump(results,open(saving_dir+'temp_no_shuffle (3 classes).p','wb'))
+    results_.append(results)
+    
+    
+    for i_random in range(10):
+        data = epochs.get_data()
+        labels = epochs.events[:,-1]
+        results={'scores_mean':[],'scores_std':[],'clf':[],'chance_mean':[],'pval':[],'activity':[],'chance_se':[]}
+        for ii in range(100):
+            data,labels = utils.shuffle(data,labels)# only difference from above
+        idx = np.arange(data.shape[-1]).reshape(-1,50) # 28 by 50 matrix
+#        cv = StratifiedKFold(n_splits=5,shuffle=True,random_state=12345)# 5 fold cross validation
+        clfs = []
+        scores = []
+#        patterns = []
+        idx = np.arange(1400).reshape(-1,50)
+        for train,test in tqdm(cv.split(data,labels),desc='train-test, shuffle'):# split the data into training set and testing set
+            X = data[train]
+            y = labels[train]
+            # fit a classifier at each of the 50 ms window with only the training data and record the trained classifier
+            clfs.append([make_clf(True).fit(X[:,:,ii],y) for ii in idx])
+            # get the decoding pattern learned by each trained classifier at each of the 50 ms window with only the training data
+#            temp_patterns = np.array([get_coef(c,attr='patterns_',inverse_transform=True) for c in clfs[-1]])
+#            patterns.append(temp_patterns)
+            X_ = data[test]
+            y_ = labels[test]
+            # compute the performance of each trained classifier at each of the 50 ms window with the testing data
+            scores_ = [metrics.f1_score(y_,clf.predict(X_[:,:,ii]),average='micro') for ii,clf in zip(idx,clfs[-1])]
+            scores.append(scores_)
+        scores = np.array(scores)
+#        patterns=np.array(patterns)
+            
+        pval = (np.array(chances.mean(1) > scores.mean(0)).sum(0)+1) / (n_perm +1) 
+    
+        results['scores_mean']=scores.mean(0)
+        results['scores_std']=scores.std(0)
+        results['chance_mean']=np.mean(chances,axis=1).mean(0)
+        results['chance_se']=np.std(chances.mean(1))/np.sqrt(n_perm)# standard error
+        results['clf']=clfs
+        results['pval']=pval
+        # average pattern learned by last dimension, which is the 50 ms window
+        # average pattern learned by the classifier over 5 folds
+#        results['activity']=patterns.mean(-1).mean(0)
+        pickle.dump(results,open(saving_dir+'temp_shuffle_%d (3 classes).p'%i_random,'wb'))
+        results_.append(results)
+    
+    pickle.dump(results_,open(saving_dir+'shuffle results (old vs new).p','wb'))
     ####################################################
     cv = StratifiedKFold(n_splits=5,shuffle=True,random_state=12345)
     clfs = []
@@ -120,87 +202,6 @@ if __name__ == '__main__':
     ax.set(xlabel='Test time',ylabel='Train time',
            title='Old vs New vs Scramble Temporal Generalization\nLinear SVM, 5-fold CV')
     fig.savefig(saving_dir+'Old vs New vs scr decoding generalization.png',dpi=500)
-    ######################### chance estimation n_perm = 10000 #############
-    cv = StratifiedKFold(n_splits=5,shuffle=True,random_state=12345)# 5 fold cross validation
-    n_perm = 1000
-    chances = []
-    for n_perm in tqdm(range(n_perm),desc='permutation test'):# the most outer loop of the permutation test
-        chances_ = []# second order temporal data storage
-        # during each permutation, we randomly shuffle the labels, so that there should not be any informative patterns
-        # that could be learned by the classifier. In other words, the feature data does not correlate to the labels
-        perm_labels = labels[np.random.choice(len(labels),size=labels.shape,replace=False)]
-        for train,test in cv.split(data,labels):# do the same procedure as a real cross validation
-            X = data[train]
-            y = perm_labels[train]
-            X_ = data[test]
-            y_ = perm_labels[test]
-            clfs_=[make_clf().fit(X[:,:,ii],y) for ii in idx]
-            scores_ = [metrics.f1_score(y_,clf.predict_proba(X_[:,:,ii])[:,-1]) for ii,clf in zip(idx,clfs_)]
-            chances_.append(scores_)
-        chances.append(chances_)
-    chances = np.array(chances)  
-    chances = np.load(saving_dir+"chance (3 class).npy")
-    # percentage of chance scores that exceed the observed score, and if it is less than 0.05, 
-    # we claim the observed score statistically significant higher than chance level
-    pval = (np.array(chances.mean(1) > scores.mean(0)).sum(0)+1) / (n_perm +1) 
-    
-    results['scores_mean']=scores.mean(0)
-    results['scores_std']=scores.std(0)
-    results['chance_mean']=np.mean(chances,axis=1).mean(0)
-    results['chance_se']=np.std(chances.mean(1))/np.sqrt(n_perm)# standard error
-    results['clf']=clfs
-    results['pval']=pval
-    # average pattern learned by last dimension, which is the 50 ms window
-    # average pattern learned by the classifier over 5 folds
-#    results['activity']=patterns.mean(-1).mean(0)
-    pickle.dump(results,open(saving_dir+'temp_no_shuffle (3 classes).p','wb'))
-#    results_.append(results)
-#    np.save(saving_dir+"chance (3 class).npy", chances)
-    
-    for i_random in range(10):
-        data = epochs.get_data()
-        labels = epochs.events[:,-1]
-        results={'scores_mean':[],'scores_std':[],'clf':[],'chance_mean':[],'pval':[],'activity':[],'chance_se':[]}
-        for ii in range(100):
-            data,labels = utils.shuffle(data,labels)# only difference from above
-        idx = np.arange(data.shape[-1]).reshape(-1,50) # 28 by 50 matrix
-#        cv = StratifiedKFold(n_splits=5,shuffle=True,random_state=12345)# 5 fold cross validation
-        clfs = []
-        scores = []
-#        patterns = []
-        idx = np.arange(1400).reshape(-1,50)
-        for train,test in tqdm(cv.split(data,labels),desc='train-test'):# split the data into training set and testing set
-            X = data[train]
-            y = labels[train]
-            # fit a classifier at each of the 50 ms window with only the training data and record the trained classifier
-            clfs.append([make_clf(True).fit(X[:,:,ii],y) for ii in idx])
-            # get the decoding pattern learned by each trained classifier at each of the 50 ms window with only the training data
-#            temp_patterns = np.array([get_coef(c,attr='patterns_',inverse_transform=True) for c in clfs[-1]])
-#            patterns.append(temp_patterns)
-            X_ = data[test]
-            y_ = labels[test]
-            # compute the performance of each trained classifier at each of the 50 ms window with the testing data
-            scores_ = [metrics.f1_score(y_,clf.predict(X_[:,:,ii]),average='micro') for ii,clf in zip(idx,clfs[-1])]
-            scores.append(scores_)
-        scores = np.array(scores)
-#        patterns=np.array(patterns)
-            
-        pval = (np.array(chances.mean(1) > scores.mean(0)).sum(0)+1) / (n_perm +1) 
-    
-        results['scores_mean']=scores.mean(0)
-        results['scores_std']=scores.std(0)
-        results['chance_mean']=np.mean(chances,axis=1).mean(0)
-        results['chance_se']=np.std(chances.mean(1))/np.sqrt(n_perm)# standard error
-        results['clf']=clfs
-        results['pval']=pval
-        # average pattern learned by last dimension, which is the 50 ms window
-        # average pattern learned by the classifier over 5 folds
-#        results['activity']=patterns.mean(-1).mean(0)
-        pickle.dump(results,open(saving_dir+'temp_shuffle_%d (3 classes).p'%i_random,'wb'))
-#        results_.append(results)
-    
-#    pickle.dump(results_,open(saving_dir+'shuffle results (old vs new).p','wb'))
-
 
 ############### plot ######################################################################
 from matplotlib import pyplot as plt

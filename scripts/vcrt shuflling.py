@@ -81,7 +81,7 @@ if __name__ == '__main__':
     patterns = []
 #    fig, axes = plt.subplots(figsize=(25,16),nrows=4,ncols=7)
     times = np.vstack([np.arange(0,1450,50)[:-1],np.arange(0,1450,50)[1:]]).T 
-    for train,test in tqdm(cv.split(data,labels),desc='train-test'):# split the data into training set and testing set
+    for train,test in tqdm(cv.split(data,labels),desc='train-test, no shuffle'):# split the data into training set and testing set
         X = data[train]# 44 by 61 by 1400
         y = labels[train]# 44 labels
         # fit a classifier at each of the 50 ms window with only the training data and record the trained classifier
@@ -125,29 +125,29 @@ if __name__ == '__main__':
     n_perm = 1000
     counts = 0
     chances = []
-#    for n_perm_ in tqdm(range(int(1e5)),desc='permutation test'):# the most outer loop of the permutation test
-#        try:# the stratified k fold cross validation might not work for some runs, but it doesn't matter, so I skip them
-#            chances_ = []# second order temporal data storage
-#            # during each permutation, we randomly shuffle the labels, so that there should not be any informative patterns
-#            # that could be learned by the classifier. In other words, the feature data does not correlate to the labels
-#            perm_labels = labels[np.random.choice(len(labels),size=labels.shape,replace=False)]
-#            for train,test in cv.split(data,labels):# do the same procedure as a real cross validation
-#                X = data[train]
-#                y = perm_labels[train]
-#                X_ = data[test]
-#                y_ = perm_labels[test]
-#                clfs_=[make_clf().fit(X[:,:,ii],y) for ii in idx]
-#                scores_ = [metrics.roc_auc_score(y_,clf.predict_proba(X_[:,:,ii])[:,-1]) for ii,clf in zip(idx,clfs_)]
-#                chances_.append(scores_)
-#            chances.append(chances_)
-#            counts += 1
-#        except:
-#            print("something is wrong, but I don't care")
-#        if counts > n_perm:
-#            break
-#        
-#    chances = np.array(chances)  
-#    np.save(saving_dir+"chance (old vs new).npy",chances)
+    for n_perm_ in tqdm(range(int(1e5)),desc='permutation test'):# the most outer loop of the permutation test
+        try:# the stratified k fold cross validation might not work for some runs, but it doesn't matter, so I skip them
+            chances_ = []# second order temporal data storage
+            # during each permutation, we randomly shuffle the labels, so that there should not be any informative patterns
+            # that could be learned by the classifier. In other words, the feature data does not correlate to the labels
+            perm_labels = labels[np.random.choice(len(labels),size=labels.shape,replace=False)]
+            for train,test in cv.split(data,labels):# do the same procedure as a real cross validation
+                X = data[train]
+                y = perm_labels[train]
+                X_ = data[test]
+                y_ = perm_labels[test]
+                clfs_=[make_clf().fit(X[:,:,ii],y) for ii in idx]
+                scores_ = [metrics.roc_auc_score(y_,clf.predict_proba(X_[:,:,ii])[:,-1]) for ii,clf in zip(idx,clfs_)]
+                chances_.append(scores_)
+            chances.append(chances_)
+            counts += 1
+        except:
+            print("something is wrong, but I don't care")
+        if counts > n_perm:
+            break
+        
+    chances = np.array(chances)  
+    np.save(saving_dir+"chance (old vs new).npy",chances)
     chances = np.load(saving_dir+"chance (old vs new).npy")
     # percentage of chance scores that exceed the observed score, and if it is less than 0.05, 
     # we claim the observed score statistically significant higher than chance level
@@ -180,7 +180,7 @@ if __name__ == '__main__':
         clfs = []
         scores = []
         patterns = []
-        for train,test in tqdm(cv.split(data,labels),desc='train-test'):# split the data into training set and testing set
+        for train,test in tqdm(cv.split(data,labels),desc='train-test,shuffle'):# split the data into training set and testing set
             X = data[train]
             y = labels[train]
             # fit a classifier at each of the 50 ms window with only the training data and record the trained classifier
@@ -221,42 +221,42 @@ if __name__ == '__main__':
     ####################### Temporal gnenralization   ############################################
     ###### train classifiers at each time sample and test the classifiers in other time samples###
     ###### this is going to take a long time to run ##############################################
-#    cv = StratifiedKFold(n_splits=5,shuffle=True,random_state=12345)
-#    clfs = [] # first we train 5 classifiers on each time point by a subset of the trials
-#    for train,test in tqdm(cv.split(data,labels),desc='training'):
-#        X = data[train]
-#        y = labels[train]
-#        clfs.append([make_clf().fit(X[:,:,ii],y) for ii in range(X.shape[-1])])
-#        
-#    scores_within = []# second, we test each 5 classifiers trained at a given time point at all possible time points
-#    for fold,(train,test) in tqdm(enumerate(cv.split(data,labels)),desc='test within'):
-#        X = data[test]
-#        y = labels[test]   
-#        scores_ = []
-#        for clf in clfs[fold]:
-#            scores_temp = [metrics.roc_auc_score(y,clf.predict_proba(X[:,:,ii])[:,-1]) for ii in range(X.shape[-1])]
-#            scores_.append(scores_temp)
-#        scores_within.append(scores_)
-#    scores_within = np.array(scores_within)
-#    
-#    pickle.dump(scores_within,open(saving_dir+'temporal generalization(old vs new).p','wb'))
-#    scores_within = pickle.load(open(saving_dir+'temporal generalization(old vs new).p','rb'))
-#    
-#    font = {
-#            'weight' : 'bold',
-#            'size'   : 20}
-#    import matplotlib
-#    matplotlib.rc('font', **font)
-#    ### plot the temporal generalization 
-#    fig,ax = plt.subplots(figsize=(12,10))
-#    im = ax.imshow(scores_within.mean(0),# take the mean over the 5-fold cross validation
-#                   origin='lower',aspect='auto',extent=[0,1400,0,1400],# some plotting thing
-#                   cmap=plt.cm.RdBu_r,vmin=.5)# set the colormap and lowest value
-#    cbar=plt.colorbar(im)
-#    cbar.set_label('AUC')
-#    ax.set(xlabel='Test time (ms)',ylabel='Train time (ms)',
-#           title='Old vs New Temporal Generalization\nLinear SVM, 5-fold CV')
-#    fig.savefig(saving_dir+'Old vs New decoding generalization.png',dpi=500)        
+    cv = StratifiedKFold(n_splits=5,shuffle=True,random_state=12345)
+    clfs = [] # first we train 5 classifiers on each time point by a subset of the trials
+    for train,test in tqdm(cv.split(data,labels),desc='training'):
+        X = data[train]
+        y = labels[train]
+        clfs.append([make_clf().fit(X[:,:,ii],y) for ii in range(X.shape[-1])])
+        
+    scores_within = []# second, we test each 5 classifiers trained at a given time point at all possible time points
+    for fold,(train,test) in tqdm(enumerate(cv.split(data,labels)),desc='test within'):
+        X = data[test]
+        y = labels[test]   
+        scores_ = []
+        for clf in clfs[fold]:
+            scores_temp = [metrics.roc_auc_score(y,clf.predict_proba(X[:,:,ii])[:,-1]) for ii in range(X.shape[-1])]
+            scores_.append(scores_temp)
+        scores_within.append(scores_)
+    scores_within = np.array(scores_within)
+    
+    pickle.dump(scores_within,open(saving_dir+'temporal generalization(old vs new).p','wb'))
+    scores_within = pickle.load(open(saving_dir+'temporal generalization(old vs new).p','rb'))
+    
+    font = {
+            'weight' : 'bold',
+            'size'   : 20}
+    import matplotlib
+    matplotlib.rc('font', **font)
+    ### plot the temporal generalization 
+    fig,ax = plt.subplots(figsize=(12,10))
+    im = ax.imshow(scores_within.mean(0),# take the mean over the 5-fold cross validation
+                   origin='lower',aspect='auto',extent=[0,1400,0,1400],# some plotting thing
+                   cmap=plt.cm.RdBu_r,vmin=.5)# set the colormap and lowest value
+    cbar=plt.colorbar(im)
+    cbar.set_label('AUC')
+    ax.set(xlabel='Test time (ms)',ylabel='Train time (ms)',
+           title='Old vs New Temporal Generalization\nLinear SVM, 5-fold CV')
+    fig.savefig(saving_dir+'Old vs New decoding generalization.png',dpi=500)        
 
 
 
