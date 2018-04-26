@@ -54,6 +54,7 @@ if __name__ == '__main__':
             clf.append(('vec',Vectorizer()))
         clf.append(('std',StandardScaler()))# subtract the mean and divided by the standard deviation
         # parameters:
+        # C: penalty term. Here I choose a small penalty to obtain better classification results
         # max_iter: set to -1 so that the classification wouldn't stop until the tol is less thatn 1e-3
         # random_state: for replication
         # class_weight: to balance the class weight in case there is any
@@ -248,6 +249,9 @@ if __name__ == '__main__':
     ax.set(xlabel='Test time (ms)',ylabel='Train time (ms)',
            title='Old vs New Temporal Generalization\nLinear SVM, 5-fold CV')
     fig.savefig(saving_dir+'Old vs New decoding generalization.png',dpi=500)        
+
+
+
 ############### plot ######################################################################
 ########## you don't need to run anything above to plot if you have done that #############
 from matplotlib import pyplot as plt
