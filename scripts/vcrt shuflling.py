@@ -52,8 +52,8 @@ if __name__ == '__main__':
         clf = []
         if vec:# if the training data has more than 2 dimensions, the vectorization must perform on the last two dimensions
             clf.append(('vec',Vectorizer()))
-        clf.append(('std',StandardScaler()))# subtract the mean and divided by the standard deviation
-#        clf.append(('std',Normalizer()))
+#        clf.append(('std',StandardScaler()))# subtract the mean and divided by the standard deviation
+        clf.append(('std',Normalizer()))
         # parameters:
         # C: penalty term. Here I choose a small penalty to obtain better classification results
         # max_iter: set to -1 so that the classification wouldn't stop until the tol is less thatn 1e-3
@@ -314,7 +314,7 @@ sample_result = results[5]
 
 times = np.vstack([np.arange(0,1450,50)[:-1],np.arange(0,1450,50)[1:]]).T
 fig, axes = plt.subplots(figsize=(26,14),nrows=4,ncols=7)
-k =8e-7
+k =1e-3
 for idx,((start,stop),score,pvalue,ax,activity) in enumerate(zip(times,sample_result['scores_mean'],
                                                                 sample_result['pval'],
                                                                 axes.flatten(),

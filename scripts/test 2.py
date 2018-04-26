@@ -48,7 +48,7 @@ if __name__ == '__main__':
         # class_weight: to balance the class weight in case there is any
         # kernel: linear kernel for linear classification performance
         # probability: tell the classifier to compute probabilistic predictions for the instances
-        clf.append(('est',LinearModel(SVC(C=100,max_iter=-1,random_state=12345,class_weight='balanced',
+        clf.append(('est',LinearModel(SVC(C=10,max_iter=-1,random_state=12345,class_weight='balanced',
                                           kernel='linear',probability=True,tol=0.001))))
 #        svc = SVC(C=10,max_iter=-1,random_state=12345,class_weight='balanced',
 #                                          kernel='linear',probability=True,tol=0.001)
