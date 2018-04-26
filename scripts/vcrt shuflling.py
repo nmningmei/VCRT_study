@@ -59,7 +59,7 @@ if __name__ == '__main__':
         # class_weight: to balance the class weight in case there is any
         # kernel: linear kernel for linear classification performance
         # probability: tell the classifier to compute probabilistic predictions for the instances
-        clf.append(('est',LinearModel(SVC(max_iter=-1,random_state=12345,class_weight='balanced',
+        clf.append(('est',LinearModel(SVC(C=.01,max_iter=-1,random_state=12345,class_weight='balanced',
                                           kernel='linear',probability=True))))
         clf = Pipeline(clf)
         return clf 
@@ -189,6 +189,7 @@ if __name__ == '__main__':
             scores.append(scores_)
         scores = np.array(scores)
         patterns=np.array(patterns)
+        plt.plot(scores.mean(0))
             
         pval = (np.array(chances.mean(1) > scores.mean(0)).sum(0)+1) / (n_perm +1) 
     
