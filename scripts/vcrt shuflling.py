@@ -314,7 +314,7 @@ sample_result = results[5]
 
 times = np.vstack([np.arange(0,1450,50)[:-1],np.arange(0,1450,50)[1:]]).T
 fig, axes = plt.subplots(figsize=(26,14),nrows=4,ncols=7)
-k =1e-3
+k =5e-3
 for idx,((start,stop),score,pvalue,ax,activity) in enumerate(zip(times,sample_result['scores_mean'],
                                                                 sample_result['pval'],
                                                                 axes.flatten(),
