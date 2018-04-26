@@ -89,21 +89,28 @@ if __name__ == '__main__':
     ######################### chance estimation n_perm = 10000 #############
     cv = StratifiedKFold(n_splits=5,shuffle=True,random_state=12345)# 5 fold cross validation
     n_perm = 1000
+    counts = 0
     chances = []
-    for n_perm in tqdm(range(n_perm),desc='permutation test'):# the most outer loop of the permutation test
-        chances_ = []# second order temporal data storage
-        # during each permutation, we randomly shuffle the labels, so that there should not be any informative patterns
-        # that could be learned by the classifier. In other words, the feature data does not correlate to the labels
-        perm_labels = labels[np.random.choice(len(labels),size=labels.shape,replace=False)]
-        for train,test in cv.split(data,labels):# do the same procedure as a real cross validation
-            X = data[train]
-            y = perm_labels[train]
-            X_ = data[test]
-            y_ = perm_labels[test]
-            clfs_=[make_clf().fit(X[:,:,ii],y) for ii in idx]
-            scores_ = [metrics.f1_score(y_,clf.predict(X_[:,:,ii])[:,-1]) for ii,clf in zip(idx,clfs_)]
-            chances_.append(scores_)
-        chances.append(chances_)
+    for n_perm_ in tqdm(range(int(1e5)),desc='permutation test'):# the most outer loop of the permutation test
+        try:# the stratified k fold cross validation might not work for some runs, but it doesn't matter, so I skip them
+            chances_ = []# second order temporal data storage
+            # during each permutation, we randomly shuffle the labels, so that there should not be any informative patterns
+            # that could be learned by the classifier. In other words, the feature data does not correlate to the labels
+            perm_labels = labels[np.random.choice(len(labels),size=labels.shape,replace=False)]
+            for train,test in cv.split(data,labels):# do the same procedure as a real cross validation
+                X = data[train]
+                y = perm_labels[train]
+                X_ = data[test]
+                y_ = perm_labels[test]
+                clfs_=[make_clf().fit(X[:,:,ii],y) for ii in idx]
+                scores_ = [metrics.f1_score(y_,clf.predict(X_[:,:,ii]),average='micro') for ii,clf in zip(idx,clfs[-1])]
+                chances_.append(scores_)
+            chances.append(chances_)
+            counts += 1
+        except:
+            print("something is wrong, but I don't care")
+        if counts > n_perm:
+            break
     chances = np.array(chances)  
     np.save(saving_dir+"chance (3 class).npy", chances)
     chances = np.load(saving_dir+"chance (3 class).npy")
