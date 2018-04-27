@@ -31,7 +31,7 @@ if __name__ == '__main__':
     # load the epoch data converted from BESA to MNE-python epoch object
     os.chdir('D:\\NING - spindle\\VCRT_study\\data\\0.1-40 Hz')
     epochs  = mne.read_epochs('D:/NING - spindle/VCRT_study/data/0.1-40 Hz/new vs old-epo.fif',preload=True)
-#    mne.combine_evoked([epochs['new'].average(),-epochs['old'].average()],'equal').plot_joint()
+    mne.combine_evoked([epochs['new'].average(),-epochs['old'].average()],'equal').plot_joint()
 #    epochs.filter(0.1,40,)
     # define the classification pipeline that is used later
     def make_clf(vec=True):
