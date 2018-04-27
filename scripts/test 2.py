@@ -21,6 +21,7 @@ if __name__ == '__main__':
     from sklearn.model_selection import StratifiedKFold,permutation_test_score,cross_val_score,GridSearchCV
     from sklearn.preprocessing import StandardScaler,QuantileTransformer,RobustScaler,Normalizer
     from sklearn.svm import SVC
+    from sklearn.ensemble import RandomForestClassifier
     from sklearn.linear_model import LogisticRegressionCV
     from sklearn.pipeline import Pipeline
     from sklearn import metrics,utils
@@ -48,8 +49,9 @@ if __name__ == '__main__':
         # class_weight: to balance the class weight in case there is any
         # kernel: linear kernel for linear classification performance
         # probability: tell the classifier to compute probabilistic predictions for the instances
-        clf.append(('est',LinearModel(SVC(C=10,max_iter=-1,random_state=12345,class_weight='balanced',
-                                          kernel='linear',probability=True,tol=0.001))))
+#        clf.append(('est',LinearModel(SVC(C=10,max_iter=-1,random_state=12345,class_weight='balanced',
+#                                          kernel='linear',probability=True,tol=0.001))))
+        clf.append(('est',RandomForestClassifier(n_estimators=5,random_state=12345,class_weight='balanced')))
 #        svc = SVC(C=10,max_iter=-1,random_state=12345,class_weight='balanced',
 #                                          kernel='linear',probability=True,tol=0.001)
 #        grid = GridSearchCV(svc,cv=4,param_grid={'C':np.logspace(-3,3,7),'tol':[0.0001,0.001,0.01]})
@@ -80,8 +82,8 @@ if __name__ == '__main__':
         # fit a classifier at each of the 50 ms window with only the training data and record the trained classifier
         clfs.append([make_clf(True).fit(X[:,:,ii],y) for ii in idx])
         # get the decoding pattern learned by each trained classifier at each of the 50 ms window with only the training data
-        temp_patterns = np.array([get_coef(c,attr='patterns_',inverse_transform=True) for c in clfs[-1]])
-        patterns.append(temp_patterns)
+#        temp_patterns = np.array([get_coef(c,attr='patterns_',inverse_transform=True) for c in clfs[-1]])
+#        patterns.append(temp_patterns)
         X_ = data[test]
         y_ = labels[test]
         # compute the performance of each trained classifier at each of the 50 ms window with the testing data
@@ -99,7 +101,7 @@ if __name__ == '__main__':
 #            
 #            
     scores = np.array(scores)
-    patterns=np.array(patterns)
+#    patterns=np.array(patterns)
     
     fig,ax = plt.subplots(figsize=(16,8))
     ax.plot(times.mean(1),scores.mean(0))
