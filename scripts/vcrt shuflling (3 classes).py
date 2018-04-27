@@ -56,7 +56,7 @@ if __name__ == '__main__':
         clf = Pipeline(clf)
         return clf 
     results_ = []# for saving all the results
-    saving_dir = 'D:\\Epochs\\vcrt results\\'
+    saving_dir = 'D:/NING - spindle/VCRT_study/results/'
     if not os.path.exists(saving_dir):
         os.mkdir(saving_dir)
     ################# first iteration: not shuffling the order of the subjects #################################
@@ -173,7 +173,7 @@ if __name__ == '__main__':
         pickle.dump(results,open(saving_dir+'temp_shuffle_%d (3 classes).p'%i_random,'wb'))
         results_.append(results)
     
-    pickle.dump(results_,open(saving_dir+'shuffle results (old vs new).p','wb'))
+#    pickle.dump(results_,open(saving_dir+'shuffle results (old vs new).p','wb'))
     ####################################################
     cv = StratifiedKFold(n_splits=5,shuffle=True,random_state=12345)
     clfs = []
@@ -215,13 +215,13 @@ from matplotlib import pyplot as plt
 import pickle
 import numpy as np
 from glob import glob
-working_dir = 'D:\\Epochs\\vcrt results\\'
+working_dir = 'D:/NING - spindle/VCRT_study/results/'
 shuffle_files = glob(working_dir+'*_shuffle*(3 classes).p')
 results = [pickle.load(open(f,'rb')) for f in shuffle_files]
 no_shuffle = results[0]
 shuffle = results[1:] 
 import mne
-epochs = mne.read_epochs('D://Epochs//3 class-epo.fif',preload=False)
+epochs = mne.read_epochs('D:/NING - spindle/VCRT_study/data/0.1-40 Hz/3 classes-epo.fif',preload=False)
 font = {
         'weight' : 'bold',
         'size'   : 20}
