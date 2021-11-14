@@ -1,5 +1,15 @@
 # VCRT_study
 
+## Requirement
+- Python 3.7.10
+- mne=0.23.4
+- numpy=1.21.2
+- scipy=1.5.3
+- matplotlib=3.4.3
+- scikit-learn=1.0
+- numba=0.53.1
+- pandas=1.3.3
+
 ## Two experimants:
 ### Old image vs New image
 ### Old image vs New Image vs Scramble image
